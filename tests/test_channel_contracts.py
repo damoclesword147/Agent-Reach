@@ -33,6 +33,8 @@ def test_channel_can_handle_contract():
         "xiaohongshu": "https://www.xiaohongshu.com/explore/123",
         "linkedin": "https://www.linkedin.com/in/test",
         "xueqiu": "https://xueqiu.com/S/SH600519",
+        "coolapk": "https://www.coolapk.com/feed/123456",
+        "tieba": "https://tieba.baidu.com/p/123456",
         "web": "https://example.com",
     }
     for ch in get_all_channels():

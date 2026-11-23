@@ -506,6 +506,18 @@ def test_doctor_reports_missing_tool_and_shows_versions(env):
     assert _status("bili") == "needs_setup"
 
 
+def test_doctor_reports_backend_prerequisite_failure_as_needs_setup(env, monkeypatch):
+    manage.add("bili")
+
+    def missing_setup(self, **kwargs):
+        raise ReachError("NEED_SETUP", "backend prerequisite missing")
+
+    monkeypatch.setattr(Bili, "_go", missing_setup)
+    result = manage.run_checks(["bili"])
+    assert result["results"][0]["error"]["code"] == "NEED_SETUP"
+    assert _status("bili") == "needs_setup"
+
+
 def test_check_without_names_tests_only_default_and_added_channels(env):
     manage.add("bili")
     tested = {r["channel"] for r in manage.run_checks()["results"]}

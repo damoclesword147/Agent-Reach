@@ -17,6 +17,8 @@ _PUBLIC_ACCESS = {
     'bilibili': '公开搜索、简介、统计可先读；部分公开接口可取评论及回复关系。',
     'xiaoyuzhou': '播客转录需要 Groq Key；安装不要求登录。',
     'v2ex': '公开主题正文和部分回复可先读；完整性、分页需要单独核对。',
+    'tieba': '可选渠道：通过 aiotieba 尝试全吧主题搜索、吧内搜索、主题列表和指定页楼层；本机能力须实测。',
+    'coolapk': '实验性适配器：第三方 CLI 需要自备 App 认证数据，干净安装无法读取酷安内容。',
     'reddit': '公开搜索、正文和部分评论可先读；部分公开 JSON 样本可含评论及 parent_id。',
     'twitter': '公开搜索摘要、部分单帖全文可先尝试；公开嵌入不提供评论流。',
     'xiaohongshu': '公开发现页可能提供笔记 ID 和作者；不据此认定正文、评论可读。',
@@ -40,6 +42,12 @@ _CAPABILITY_LIMITS = {
     'linkedin': ['当前仅声明职位搜索和 JD 读取，不承诺联系人或动态抓取。'],
     'boss': ['当前仅声明职位搜索和 JD 读取；登录不保证平台始终允许访问。'],
     'v2ex': ['回复是否完整须核对分页与实际返回数量。'],
+    'tieba': ['全吧搜索只覆盖主题；--forum 使用准确吧名，例如显卡，不附加“吧”字。',
+              'read 只返回指定页楼层；comment_limit 为 0-5，每楼仅限量高赞楼中楼，不能视为完整评论树。',
+              '可选 aiotieba 4.8.4 要求 Python >=3.11,<3.16；安装不等于已通过联网验收。'],
+    'coolapk': ['详情可能遭验证码或缺失字段；搜索和列表内容不能一律当作全文。',
+                '只提供 search/hot/secondhand/read；不提供发帖、私信、点赞或自动登录。',
+                '缺少 App 认证数据时报 NEED_SETUP；安装 CLI 本身不代表可读。'],
 }
 
 
@@ -50,6 +58,8 @@ _QUICK_ACCESS = {
     'youtube': ('✅ 找视频、读简介、读字幕', '—'),
     'bilibili': ('✅ 找视频、读简介', '❌ 读字幕'),
     'v2ex': ('✅ 读帖子、看回复', '—'),
+    'tieba': ('可选适配器：主题列表、搜索、分页楼层；实际以逐动作验收为准', '—'),
+    'coolapk': ('实验性：缺 App 认证数据时不可用（NEED_SETUP）', '—'),
     'web': ('✅ 搜资料、读网页', '—'),
     'reddit': ('✅ 搜帖子、读正文、看评论', '—'),
     'twitter': ('✅ 搜摘要、试读原文', '❌ 搜推文、看动态、看回复'),
@@ -67,6 +77,7 @@ _DISPLAY_NAMES = {
     'web': '网页', 'reddit': 'Reddit', 'twitter': 'X / Twitter', 'facebook': 'Facebook',
     'instagram': 'Instagram', 'xiaohongshu': '小红书', 'linkedin': 'LinkedIn',
     'boss': 'BOSS直聘', 'xueqiu': '雪球',
+    'tieba': '百度贴吧', 'coolapk': '酷安',
 }
 
 _STATUS_LABELS = {

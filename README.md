@@ -72,7 +72,7 @@ Claude Code、Codex、Hermes Agent、OpenClaw 这类 CLI Agent 自带搜索和�
 
 - **要登录才能用的功能**：在小红书搜笔记、在 X 查账号动态、读职位详情等。
 - **视频里的内容**：B站和 YouTube 的字幕，以及 YouTube 视频、小宇宙播客的语音转文字。
-- **中文平台**：B站、小红书、V2EX、雪球，通用搜索覆盖很差。
+- **中文平台**：B站、小红书、百度贴吧、酷安、V2EX、雪球，通用搜索覆盖很差。
 - **干净的结构化数据**：雪球行情、V2EX 帖子和回复、GitHub 仓库和 issue，拿到的是整理好的内容。
 
 Agent Reach 把这些平台背后的工具替你装好、测好，Agent 一条命令就能用：
@@ -81,6 +81,7 @@ Agent Reach 把这些平台背后的工具替你装好、测好，Agent 一条�
 agent-reach channels                          # 有哪些渠道、每个渠道能做什么
 agent-reach bilibili search "大模型"           # agent-reach <渠道> <动作> [参数]
 agent-reach read https://www.v2ex.com/t/123   # 按链接自动选渠道
+agent-reach tieba threads "显卡"               # 可选渠道：列出指定吧的主题
 ```
 
 ### ✅ 在你用之前，你可能想知道
@@ -103,6 +104,8 @@ agent-reach read https://www.v2ex.com/t/123   # 按链接自动选渠道
 | web | 默认 | 网页搜索、网页阅读（保底） | 无 |
 | xiaohongshu | 可选 | 搜笔记、读正文、看评论 | 登录 |
 | xueqiu | 可选 | 实时行情、搜股票、热帖、热股 | 行情不用登录；热帖、热股要登录 |
+| tieba | 可选 | 全吧主题搜索、吧内搜索、主题楼层分页的适配器 | 仅列帖已有本机样本；搜索、read 本次超时 |
+| coolapk | 可选 | 动态搜索、热榜、二手列表和详情的适配器 | 当前后端缺少 App 认证数据，返回 NEED_SETUP |
 | boss | 可选 | 搜职位和 JD | 登录 |
 | xiaoyuzhou | 可选 | 播客转文字 | Groq Key |
 | linkedin | 可选 | 搜职位、读职位详情 | 公开职位不用登录；站内搜索要登录 |
@@ -136,6 +139,35 @@ agent-reach read https://www.v2ex.com/t/123   # 按链接自动选渠道
 关于登录：部分平台会直接复用你电脑上已有的登录。想换成某个特定账号（比如小号），跟 Agent 说一声就行。Agent 从不替你登录，也不会要你的密码。
 
 > ⚠️ PyPI 上叫 `agent-reach` 的包不是本项目，请勿从 PyPI 安装，只用 install.md 里的 GitHub 地址。
+
+---
+
+## 可选中文社区（本 fork 新增）
+
+贴吧和酷安沿用上游的渠道、JSON 输出、错误处理、安装与验收机制。2026-11-20 本机验收中，贴吧列帖返回了真实样本，读取和全吧搜索超时；酷安缺少后端前置数据。安装成功不能证明内容可读或完整。上面的上游安装入口不会自动包含本 fork 的新增渠道。
+
+基础 Agent Reach 仍支持 Python 3.10+。贴吧使用的 aiotieba 4.8.4 要求 **Python >=3.11,<3.16**；酷安 CLI 要求 Python 3.10+。请先使用相容 Python 安装本分支版本，再按需添加渠道：
+
+```bash
+agent-reach add tieba
+agent-reach add coolapk
+agent-reach doctor --text         # 离线检查依赖和已有验收记录
+agent-reach check tieba --text    # 联网检查已声明的测试动作
+agent-reach check coolapk --text
+
+agent-reach tieba search "5070Ti" --limit 5
+agent-reach tieba search "5070Ti" --forum "显卡" --page 1
+agent-reach tieba threads "显卡" --sort reply --limit 10
+agent-reach tieba read "https://tieba.baidu.com/p/<帖子ID>" --page 2 --comment_limit 5
+agent-reach coolapk search "手机" --limit 5 --page 1
+agent-reach coolapk hot --limit 5
+agent-reach coolapk secondhand --brand 1005 --limit 5
+agent-reach coolapk read "https://www.coolapk.com/feed/<动态ID>"
+```
+
+贴吧全吧搜索覆盖主题，`--forum` 指定准确吧名（例如“显卡”，不是“显卡吧”）；`read` 只读取指定页楼层，`--comment_limit` 为 0-5，默认 0，每楼最多返回所请求数量的高赞楼中楼。酷安适配器依赖第三方 CLI 的 App 认证数据；干净安装能安装工具，但缺少数据时动作会返回 `NEED_SETUP`，目前未验收任何酷安内容。两个渠道均只读；遇到验证或限流停止本次尝试。
+
+更多参数、完整性边界和验收说明见 [中文社区渠道](docs/chinese-communities.md)。
 
 ---
 

@@ -72,7 +72,7 @@ CLI agents such as Claude Code, Codex, Hermes Agent and OpenClaw come with web s
 
 - **Features that need a login**: searching XiaoHongShu notes, checking an X account's latest posts, reading job details, and more.
 - **What's inside video**: YouTube and Bilibili subtitles, plus speech-to-text for YouTube videos and Xiaoyuzhou podcasts.
-- **Chinese platforms**: Bilibili, XiaoHongShu, V2EX and Xueqiu, which general search covers poorly.
+- **Chinese platforms**: Bilibili, XiaoHongShu, Baidu Tieba, Coolapk, V2EX and Xueqiu, which general search covers poorly.
 - **Clean structured data**: Xueqiu quotes, V2EX topics and replies, GitHub repos and issues, already cleaned up.
 
 Agent Reach installs and tests the tools behind these platforms for you, so your agent can use them with one command:
@@ -81,6 +81,7 @@ Agent Reach installs and tests the tools behind these platforms for you, so your
 agent-reach channels                          # which channels exist and what each can do
 agent-reach youtube search "LLM agents"       # agent-reach <channel> <action> [args]
 agent-reach read https://www.v2ex.com/t/123   # picks the channel from the link
+agent-reach tieba threads "显卡"               # optional: list threads in a forum
 ```
 
 ### ✅ Before you start, you might want to know
@@ -105,6 +106,8 @@ This table reflects the current release.
 | linkedin | optional | search jobs, read job details | public jobs need nothing; in-site search needs a login |
 | xiaohongshu | optional | search notes, read text, view comments | login |
 | xueqiu | optional | real-time quotes, stock search, hot posts, hot stocks | quotes need nothing; hot posts and stocks need a login |
+| tieba | optional | adapters for global search, forum search and paginated floors | one live thread-list sample; search/read timed out on the test machine |
+| coolapk | optional | adapters for feed search, hot feeds, second-hand listings and details | missing app authentication data causes NEED_SETUP |
 | boss | optional | job and JD search | login |
 | xiaoyuzhou | optional | podcast transcription | Groq key |
 | twitter | experimental | search tweets, profiles, user tweets, threads | login |
@@ -136,6 +139,35 @@ The agent does the rest. Along the way you may be asked to:
 About logins: some platforms reuse the logins already on your computer. Want a specific account instead, such as a secondary one? Just tell your agent. The agent never logs in for you and never asks for your password.
 
 > ⚠️ The PyPI package named `agent-reach` is NOT this project. Don't install it from PyPI; use the GitHub URL in install.md.
+
+---
+
+## Optional Chinese communities (added in this fork)
+
+Tieba and Coolapk reuse the upstream channel contract, JSON output, error handling, installation and checks. On the test machine on 2026-11-20, Tieba returned a live thread-list sample; reads and global search timed out. Coolapk lacks a backend prerequisite. Installation is not proof that content is accessible or complete. The upstream installation link above does not install this fork's additions.
+
+Base Agent Reach keeps Python 3.10+ support. Tieba's optional aiotieba 4.8.4 tool requires **Python >=3.11,<3.16**; Coolapk CLI requires Python 3.10+. After installing this branch with a compatible Python, add only the channels you need:
+
+```bash
+agent-reach add tieba
+agent-reach add coolapk
+agent-reach doctor --text       # offline dependencies and saved acceptance records
+agent-reach check tieba --text  # live checks for declared test actions
+agent-reach check coolapk --text
+
+agent-reach tieba search "5070Ti" --limit 5
+agent-reach tieba search "5070Ti" --forum "显卡" --page 1
+agent-reach tieba threads "显卡" --sort reply --limit 10
+agent-reach tieba read "https://tieba.baidu.com/p/<thread-id>" --page 2 --comment_limit 5
+agent-reach coolapk search "手机" --limit 5 --page 1
+agent-reach coolapk hot --limit 5
+agent-reach coolapk secondhand --brand 1005 --limit 5
+agent-reach coolapk read "https://www.coolapk.com/feed/<feed-id>"
+```
+
+Tieba global search covers threads. Use an exact forum name with `--forum`, such as `显卡` rather than `显卡吧`. Thread reads fetch one page; `--comment_limit` accepts 0-5 (default 0), returning at most that many high-ranking nested replies per floor. The Coolapk adapter depends on app authentication data required by its third-party CLI. Installing the tool alone is insufficient: actions return `NEED_SETUP` when the data is missing, and no Coolapk content has passed a live check yet. These adapters are read-only and stop on verification or rate limits.
+
+See [Chinese community channels](chinese-communities.md) for parameters, completeness limits and acceptance notes.
 
 ---
 

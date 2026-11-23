@@ -8,11 +8,13 @@ from typing import List, Optional
 from .base import Channel
 from .bilibili import BilibiliChannel
 from .boss import BossChannel
+from .coolapk import CoolapkChannel
 from .facebook import FacebookChannel
 from .github import GitHubChannel
 from .instagram import InstagramChannel
 from .linkedin import LinkedInChannel
 from .reddit import RedditChannel
+from .tieba import TiebaChannel
 from .twitter import TwitterChannel
 from .v2ex import V2EXChannel
 from .web import WebChannel
@@ -29,12 +31,14 @@ ALL_CHANNELS: List[Channel] = [
     FacebookChannel(),
     InstagramChannel(),
     BilibiliChannel(),
+    CoolapkChannel(),
     XiaoHongShuChannel(),
     LinkedInChannel(),
     BossChannel(),
     V2EXChannel(),
     XueqiuChannel(),
     XiaoyuzhouChannel(),
+    TiebaChannel(),
     WebChannel(),
 ]
 

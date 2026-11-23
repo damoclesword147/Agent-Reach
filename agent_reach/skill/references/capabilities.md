@@ -24,6 +24,8 @@ Read when the user asks what can be fetched or how complete a result is. Declare
 | LinkedIn | 搜公开职位、读公开 JD | jobs/read 先尝试公开网页；指定 opencli 才直接走站内；不保证所有职位可读 |
 | BOSS | 搜索索引中可能有职位摘要 | search/read 职位列表与 JD；不能根据编码薪资猜数字；详情后备能力依渠道声明 |
 | V2EX | 主题、正文及公开回复 | hot/node/read/user；返回范围以本次响应为准，不保证隐藏或缺失回复 |
+| 百度贴吧 | 公开主题、吧内搜索和指定页楼层 | 可选 search/threads/read；全吧搜索只覆盖主题，--forum 使用准确吧名（如显卡）；楼中楼为每楼 0-5 条高赞样本，非完整评论树；本 fork 新增，待真实平台验收 |
+| 酷安 | 可选适配器，干净安装尚不能读取内容 | search/hot/secondhand/read 需要第三方 CLI 的 App 认证数据；缺少时报 NEED_SETUP；不可将结果替换为其他信息流 |
 | 雪球 | 部分公开行情和索引信息 | quote/search/hot_posts/hot_stocks；行情与社区路径分别验收 |
 | Web | Agent 自带搜索/读取 | Reach web search/read 为匿名保底；摘要、页面壳和验证页不能当完整正文 |
 | 小宇宙 | 节目页标题、简介 | transcribe 整集转文字；需要用户提供 Groq Key（`agent-reach configure groq-key`） |

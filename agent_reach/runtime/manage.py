@@ -230,6 +230,9 @@ def channel_status(ch, data: dict) -> dict:
         failed = [a for a, ok in actions.items() if not ok]
         if failed:
             codes = check.get("codes", {})
+            if all(codes.get(a) == NEED_SETUP for a in failed):
+                return {"status": "needs_setup", "problems": [f"missing setup for: {', '.join(failed)}"],
+                        "checked_at": check["at"]}
             if all(codes.get(a) == "NEED_LOGIN" for a in failed):
                 return {"status": "needs_login", "problems": [f"needs login for: {', '.join(failed)}"],
                         "hint": f"agent-reach login {ch.name}", "checked_at": check["at"]}

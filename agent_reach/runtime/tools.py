@@ -49,6 +49,9 @@ class Tool:
     exclude: Tuple[str, ...] = ()   # known-bad versions
     tested: str = ""                # reproducible default for newly installed tools
     needs: Tuple[str, ...] = ()     # tools that must be installed first
+    min_python: Tuple[int, int] = (3, 10)
+    max_python: Optional[Tuple[int, int]] = None  # exclusive
+    extra_packages: Tuple[str, ...] = ()
 
 
 TOOLS: Dict[str, Tool] = {
@@ -61,6 +64,12 @@ TOOLS: Dict[str, Tool] = {
             "boss-agent-cli @ https://github.com/can4hou6joeng4/boss-agent-cli/archive/4c991b77086a203173bf08a4cb64a23af6514fe6.zip",
             ("boss",),
         ),
+        Tool(
+            "coolapk-mcp", "pip",
+            "coolapk-mcp @ https://github.com/Lniosy/coolapk-mcp/archive/5cb662d36a2440ca6296b0448a7634ec98db4bb1.zip",
+            ("coolapk",), extra_packages=("click>=8,<9",),
+        ),
+        Tool("aiotieba", "pip", "aiotieba==4.8.4", (), min_python=(3, 11), max_python=(3, 16)),
         Tool("opencli", "npm", "@jackwener/opencli", ("opencli",), singleton=True, floor="1.8.7", exclude=("1.8.8",), tested="2.0.3", needs=("node",)),
         Tool("ffmpeg", "ffmpeg", "imageio-ffmpeg", ("ffmpeg",)),
         Tool("node", "node", "", ("node", "npm", "npx")),
@@ -144,6 +153,22 @@ def resolve(command: str) -> Optional[str]:
     return str(ours) if ours.exists() else None
 
 
+def python_for_tool(name: str) -> Optional[str]:
+    """Return a private pip tool's Python interpreter without adding it to PATH."""
+    tool = TOOLS.get(name)
+    if not tool or tool.kind != "pip":
+        return None
+    path = tool_dir(name) / "venv" / ("Scripts/python.exe" if _WIN else "bin/python")
+    return str(path) if path.is_file() else None
+
+
+def _private_install_ok(tool: Tool) -> bool:
+    """Whether a private install has its declared entry points or package."""
+    if tool.kind == "pip" and not tool.commands:
+        return python_for_tool(tool.name) is not None and _pip_version(tool) is not None
+    return all(_private_bin(tool, command).exists() for command in tool.commands)
+
+
 def ffmpeg_path() -> Optional[str]:
     return resolve("ffmpeg")
 
@@ -155,6 +180,8 @@ def present(name: str) -> bool:
         from .browser import chrome_binary
 
         return chrome_binary() is not None
+    if tool.kind == "pip" and not tool.commands:
+        return _private_install_ok(tool)
     return all(resolve(c) for c in tool.commands)
 
 
@@ -233,6 +260,8 @@ def _command_version(exe: Optional[str]) -> Optional[str]:
 
 def installed_version(tool: Tool) -> Optional[str]:
     """Version of the copy `resolve` would use (singletons: whichever is on PATH)."""
+    if tool.kind == "pip" and not tool.commands:
+        return _pip_version(tool)
     return _command_version(resolve(tool.commands[0]))
 
 
@@ -319,6 +348,11 @@ def _download(url: str, dest: Path, timeout: float = 600) -> None:
 
 
 def _install_pip(tool: Tool) -> None:
+    if sys.version_info[:2] < tool.min_python or (tool.max_python and sys.version_info[:2] >= tool.max_python):
+        required = ".".join(map(str, tool.min_python))
+        upper = " and below " + ".".join(map(str, tool.max_python)) if tool.max_python else " or newer"
+        raise ReachError(NEED_SETUP, f"{tool.name} requires Python {required}{upper}",
+                         hint="Run Agent Reach with a compatible Python interpreter, then add this channel again.")
     venv = tool_dir(tool.name) / "venv"
     venv.parent.mkdir(parents=True, exist_ok=True)
     py = venv / ("Scripts/python.exe" if _WIN else "bin/python")
@@ -326,7 +360,7 @@ def _install_pip(tool: Tool) -> None:
     # and pip cache; venv repairs a missing interpreter in place.
     if not py.is_file():
         _run([sys.executable, "-m", "venv", str(venv)], stage=f"{tool.name}:venv")
-    _run([str(py), "-m", "pip", "install", "--quiet", "--disable-pip-version-check", install_spec(tool)],
+    _run([str(py), "-m", "pip", "install", "--quiet", "--disable-pip-version-check", install_spec(tool), *tool.extra_packages],
          stage=f"{tool.name}:pip_packages")
     if tool.kind == "ffmpeg":
         exe = _run([str(py), "-c", "import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())"]).strip()
@@ -523,13 +557,14 @@ def ensure(name: str, *, allow_upgrade: bool = False, upgrade: bool = False) -> 
         _upgrade_user_singleton(tool)
         return record(name, installed_version(tool), owner=entry.get("owner", "user"), scope="global")
 
-    private_ok = all(_private_bin(tool, c).exists() for c in tool.commands)
+    private_ok = _private_install_ok(tool)
     if tool.kind in ("node", "uv", "ffmpeg") and not private_ok and all(shutil.which(c) for c in tool.commands):
         return {"tool": name, "owner": "system", "scope": "system", "version": None}
     pinned_mismatch = False
-    if private_ok and tool.name == "boss-agent-cli":
+    if private_ok and tool.kind == "pip" and " @ " in tool.package:
         venv = tool_dir(tool.name) / "venv"
-        sources = list(venv.glob("**/boss_agent_cli-*.dist-info/direct_url.json"))
+        distribution = re.sub(r"[-_.]+", "_", _dist_name(tool))
+        sources = list(venv.glob(f"**/{distribution}-*.dist-info/direct_url.json"))
         expected = tool.package.split(" @ ", 1)[-1].strip()
         try:
             source = json.loads(sources[0].read_text()) if sources else {}
